@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">VideoTeacher</string>
+    <string name="api_key">905533098982-qnqdmn5lbbikqc65bs4memr2sffcupaa.apps.googleusercontent.com</string>
+    <string name="failed">Failed to initialize Youtube Player</string>
+</resources>
