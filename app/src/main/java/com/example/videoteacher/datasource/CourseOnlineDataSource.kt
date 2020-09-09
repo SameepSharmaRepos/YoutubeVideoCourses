@@ -32,8 +32,8 @@ class CourseOnlineDataSource(
         val searchRes = MutableLiveData<List<Course>>()
             try {
 
-                val course = mainActDao.getSavedVideosMain()
-            if (course?.value == null) {
+                //val course = mainActDao.getSavedVideosMain()
+            //if (course?.value == null) {
                 val onlineSearch = courseService.searchCourses(query, nextPageToken)
                 if (onlineSearch.isSuccessful) {
                     val course = onlineSearch.body()?:throw Exception(onlineSearch.message())
@@ -58,7 +58,7 @@ class CourseOnlineDataSource(
                     } else throw Exception("Error while searching course.")
                     }else {
                     throw Exception("Error while searching course.")
-                }
+                //}
                 }
             }catch (e: IOException){
                 e.printStackTrace()

@@ -31,6 +31,16 @@ class MainRepoImpl(
         }
         return offlineDataSource.getSavedCourses()
     }
+    fun getSearchedCourseList(query:String): LiveData<List<Course>>? {
+        scope.launch {
+            //Log.e("IsNullData>>", "${offlineDataSource.getSavedCourses()?.value?.size} <<<")
+            if (null==offlineDataSource.getSavedCourses()?.value){
+                Log.e("Is NullLocal>>", "Yes ${MainActivity.INIT_QUERY} <<<")
+                onlineDataSource.searchCourse(query)
+            }
+        }
+        return offlineDataSource.getSavedCourses()
+    }
 
     fun setScope(coroutineScope: CoroutineScope){
         this.scope=coroutineScope

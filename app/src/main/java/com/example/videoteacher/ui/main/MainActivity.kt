@@ -5,13 +5,20 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.Menu
+import android.view.View
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.core.view.MenuItemCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoteacher.R
-import com.example.videoteacher.adapters.VideoItemAdapter
 import com.example.videoteacher.adapters.YoutubeAdapter
 import com.example.videoteacher.dao.MainActDao
 import com.example.videoteacher.database.VideoDb
@@ -46,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setUpToolbar()
         mainDao = VideoDb.getDatabase(applicationContext).mainActDao()
         offlineDataSource = CourseOfflineDataSource(mainDao)
         onlineDataSource = CourseOnlineDataSource(offlineDataSource, mainDao, CourseService())
@@ -58,10 +66,17 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun setUpToolbar() {
+
+        val tb = findViewById<Toolbar>(R.id.toolbar_main)
+        setSupportActionBar(tb)
+
+    }
+
     private fun setTextWatcher() {
 
 
-        et_main.addTextChangedListener(object : TextWatcher{
+        et_main.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
 
@@ -83,13 +98,13 @@ class MainActivity : AppCompatActivity() {
         progress = ProgressDialog(this)
         progress.setMessage("Searching Videos")
         progress.show()
-       // mainViewModel.setCourseQuery(INIT_QUERY)
+        // mainViewModel.setCourseQuery(INIT_QUERY)
 
         Log.e("CalledFuncInit>>", "Yes <<<")
-        mainViewModel.observeList().observe(this, Observer {
+        mainViewModel.courseList.observe(this, Observer {
             Log.e("MainSize>>", "${it.size} <<")
-            yAdapter= YoutubeAdapter(this, it)
-            rvRecentMain.adapter=yAdapter
+            yAdapter = YoutubeAdapter(this, it)
+            rvRecentMain.adapter = yAdapter
             progress.dismiss()
 
             /*
@@ -100,7 +115,47 @@ class MainActivity : AppCompatActivity() {
         mainViewModel.setCourseQuery(INIT_QUERY)
 
 
+    }
 
+    private lateinit var searchView: SearchView
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+
+        menuInflater.inflate(R.menu.menu_search, menu)
+        val searchItem = menu?.findItem(R.id.app_bar_search)
+        if (searchItem != null) {
+            searchView = MenuItemCompat.getActionView(searchItem) as SearchView
+
+            val searchPlate =
+                searchView.findViewById(androidx.appcompat.R.id.search_src_text) as EditText
+
+            searchPlate.hint = "Search Courses"
+
+            val searchPlateView: View =
+                searchView.findViewById(androidx.appcompat.R.id.search_plate)
+
+            searchPlateView.setBackgroundColor(
+                ContextCompat.getColor(
+                    this,
+                    android.R.color.transparent
+                )
+            )
+
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    mainViewModel.setCourseQuery(query!!)
+                    Toast.makeText(this@MainActivity, "$query !!", Toast.LENGTH_LONG).show()
+                    return false
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    return false
+                }
+
+            })
+
+        }
+        return super.onCreateOptionsMenu(menu)
     }
 
     private fun setupRecycler() {
@@ -111,7 +166,7 @@ class MainActivity : AppCompatActivity() {
 
         val layoutManSug = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
         rvSuggestedMain.layoutManager = layoutManSug
-        yAdapter= YoutubeAdapter(this, listOf())
+        yAdapter = YoutubeAdapter(this, listOf())
         //rvSuggestedMain.adapter=adapterDemo
         getInitialVideos()
 

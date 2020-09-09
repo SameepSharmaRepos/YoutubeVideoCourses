@@ -15,12 +15,13 @@ class MainViewModel(private val repo: MainRepoImpl) : ViewModel() {
         repo.setScope(viewModelScope)
         courseSearch.postValue(MainActivity.INIT_QUERY)
         courseList = Transformations.switchMap(courseSearch) { input: String? ->
-            return@switchMap input?.let { repo.getMainCourseList() }
+            return@switchMap input?.let { repo.getSearchedCourseList(input) }
         }
 
 
     }
     fun setCourseQuery(query: String) {
+        Log.e("OnQueyChange>>", "$query <<<")
         courseSearch.postValue(query)
     }
 
