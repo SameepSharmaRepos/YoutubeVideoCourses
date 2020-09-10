@@ -66,6 +66,7 @@
                 android:padding="12dp"
                 android:layout_marginBottom="10dp"
                 android:hint="Search courses"
+                android:visibility="gone"
                 android:drawableRight="@drawable/ic_search_grey_24dp"/>
 
             <TextView
@@ -85,7 +86,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Courses You Might Like"
+                android:text="Android Courses You Might Like"
                 android:layout_marginTop="10dp"
                 android:textStyle="bold"
                 android:textSize="18sp"

@@ -21,21 +21,11 @@ class MainRepoImpl(
         offlineDataSource.insertMainList(list)
     }
 
-    fun getMainCourseList(): LiveData<List<Course>>? {
-        scope.launch {
-            //Log.e("IsNullData>>", "${offlineDataSource.getSavedCourses()?.value?.size} <<<")
-            if (null==offlineDataSource.getSavedCourses()?.value){
-                Log.e("Is NullLocal>>", "Yes ${MainActivity.INIT_QUERY} <<<")
-                onlineDataSource.searchCourse(MainActivity.INIT_QUERY)
-            }
-        }
-        return offlineDataSource.getSavedCourses()
-    }
     fun getSearchedCourseList(query:String): LiveData<List<Course>>? {
         scope.launch {
             //Log.e("IsNullData>>", "${offlineDataSource.getSavedCourses()?.value?.size} <<<")
             if (null==offlineDataSource.getSavedCourses()?.value){
-                Log.e("Is NullLocal>>", "Yes ${MainActivity.INIT_QUERY} <<<")
+                Log.e("Is NullLocal>>", "Yes ${query} <<<")
                 onlineDataSource.searchCourse(query)
             }
         }
@@ -46,5 +36,14 @@ class MainRepoImpl(
         this.scope=coroutineScope
     }
 
+    fun getPlaylist(id: String): LiveData<List<Course>> {
+        val playList = offlineDataSource.getSavedPlaylist(id)
+        Log.e("PlayListSizeOffline>>", "${playList.value?.size} <<<")
+        scope.launch {
+            if (null==playList.value)
+            onlineDataSource.getPlayList(id)
+        }
 
+        return offlineDataSource.getSavedPlaylist(id)
+    }
 }

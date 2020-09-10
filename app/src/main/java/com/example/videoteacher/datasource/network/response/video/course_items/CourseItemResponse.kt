@@ -4,7 +4,7 @@ import com.google.api.services.youtube.model.PageInfo
 
 data class CourseItemResponse(
 	val nextPageToken: String? = null,
-	val pageInfo: PageInfo? = null,
+	val pageInfo: com.example.videoteacher.datasource.network.response.video.PageInfo? = null,
 	val items: List<ItemsItem?>? = null
 ){
 	fun isItemListValid(): Boolean{

@@ -88,7 +88,6 @@ public class YoutubeAdapter extends RecyclerView.Adapter<YoutubeAdapter.MyViewHo
          // - get element from your dataset at this position
         // - replace the contents of the view with that element
         final Course singleVideo = mVideoList.get(position);
-        Log.e("ImageVideo>>", singleVideo.getImage()+" <<<");
 
         //replace the default text with id, title and description with setText method
         holder.title.setText(singleVideo.getPubName());

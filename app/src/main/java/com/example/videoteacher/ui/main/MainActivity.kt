@@ -14,6 +14,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuItemCompat
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,6 +26,7 @@ import com.example.videoteacher.database.VideoDb
 import com.example.videoteacher.datasource.CourseOfflineDataSource
 import com.example.videoteacher.datasource.CourseOnlineDataSource
 import com.example.videoteacher.datasource.network.CourseService
+import com.example.videoteacher.model.Course
 import com.example.videoteacher.repository.MainRepoImpl
 import com.example.videoteacher.ui.youtube.YoutubeConnector
 import kotlinx.android.synthetic.main.activity_main.*
@@ -39,6 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     //yputubeAdapter
     lateinit var yAdapter: YoutubeAdapter
+    lateinit var yAdapterSuggested: YoutubeAdapter
     lateinit var yConnector: YoutubeConnector
 
     //Dao
@@ -99,20 +102,30 @@ class MainActivity : AppCompatActivity() {
         progress.setMessage("Searching Videos")
         progress.show()
         // mainViewModel.setCourseQuery(INIT_QUERY)
+        mainViewModel.setCourseQuery(INIT_QUERY)
 
-        Log.e("CalledFuncInit>>", "Yes <<<")
         mainViewModel.courseList.observe(this, Observer {
-            Log.e("MainSize>>", "${it.size} <<")
+            if (it.isNotEmpty())
+            Log.e("PlainList>>", "${it[0].id} <<<")
             yAdapter = YoutubeAdapter(this, it)
             rvRecentMain.adapter = yAdapter
             progress.dismiss()
 
             /*
-            yAdapter.setResultList(it)
+            yAdapter.setResultList(it)04
             yAdapter.notifyDataSetChanged()*/
         })
 
-        mainViewModel.setCourseQuery(INIT_QUERY)
+        mainViewModel.suggestedAndroidList?.observe(this, Observer {
+            yAdapterSuggested= YoutubeAdapter(this, it)
+            if (it.isNotEmpty())
+            Log.e("Androidist>>", "${it[0].id} <<<")
+            rvSuggestedMain.adapter=yAdapterSuggested
+            if (progress.isShowing)
+                progress.dismiss()
+
+        })
+
 
 
     }

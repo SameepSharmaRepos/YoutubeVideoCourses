@@ -12,7 +12,6 @@ class CourseOfflineDataSource(private val mainActDao: MainActDao){
 
     fun getSavedCourses(): LiveData<List<Course>>? {
 
-        Log.e("Fetching FromDb>> ", "Yes <<<")
         return mainActDao.getSavedVideosMain()
 
     }
@@ -23,6 +22,12 @@ class CourseOfflineDataSource(private val mainActDao: MainActDao){
 
     fun setScope(coroutineScope: CoroutineScope){
         this.scope=coroutineScope
+    }
+
+    fun getSavedPlaylist(id: String): LiveData<List<Course>> {
+
+        return mainActDao.getSavedPlaylist(id)
+
     }
 
 }

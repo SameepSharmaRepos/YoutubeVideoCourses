@@ -52,6 +52,7 @@ class CourseOnlineDataSource(
                                 ))
                             }
                         }
+                        Log.e("SizeFromOL>>", "${courseList.size} <<<")
                         mainActDao.insertVideoList(courseList)
                         Log.e("AfterSave", "${mainActDao.getSavedVideosMain()?.value?.size} <<<")
                         searchRes.postValue(courseList)
@@ -75,5 +76,56 @@ class CourseOnlineDataSource(
         return searchRes
 
         }
+
+    suspend fun getPlayList(id: String): MutableLiveData<List<Course>> {
+        Log.e("GetPlayList>>", "$id <<<")
+        val searchRes = MutableLiveData<List<Course>>()
+
+        try {
+            //val course = mainActDao.getSavedVideosMain()
+            //if (course?.value == null) {
+            val playListReq = courseService.getCourseItems(id, nextPageToken, 25, "snippet")
+            if (playListReq.isSuccessful) {
+                val course = playListReq.body()?:throw Exception(playListReq.message())
+                if (course.isItemListValid()){
+                    nextPageToken = course.nextPageToken
+                    val courseListRaw = course.items
+                    val courseList = mutableListOf<Course>()
+
+                    courseListRaw?.forEach{
+                        val snippet = it?.snippet ?: return@forEach
+                        val courseId = it.snippet.playlistId?: return@forEach
+                        if (snippet.isDataValid()){
+                            courseList.add(Course(courseId, snippet.title!!,snippet.channelId!!,
+                                snippet.channelTitle!!,snippet.description!!,snippet.thumbnails?.medium?.url!!,
+                                "","youtube",false,false,0,snippet.publishedAt!!,null, Date()
+                            ))
+                        }
+                    }
+                    Log.e("SizeFromOL>>", "${courseList.size} <<<")
+                    mainActDao.insertVideoList(courseList)
+                    Log.e("AfterSave", "${mainActDao.getSavedVideosMain()?.value?.size} <<<")
+                    searchRes.postValue(courseList)
+                } else throw Exception("Error while searching course.")
+            }else {
+                throw Exception("Error while searching course.")
+                //}
+            }
+        }catch (e: IOException){
+            e.printStackTrace()
+            // Internet not connected.
+            observer.postValue(EVENT_COURSE_SEARCH_NO_INTERNET)
+            Log.e("Nointernet>>", "${e.localizedMessage} <<<")
+        }catch (e:Exception){
+            e.printStackTrace()
+            // Something went wrong
+            Log.e("OtherError>>", "${e.message} <<<")
+            observer.postValue(EVENT_COURSE_SEARCH_SOMETHING_WENT_WRONG)
+        }
+
+        return searchRes
+
+
+    }
 
 }

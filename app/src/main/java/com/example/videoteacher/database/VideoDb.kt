@@ -27,7 +27,7 @@ abstract class VideoDb:RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     VideoDb::class.java,
-                    "word_database"
+                    "course_database"
                 ).build()
                 INSTANCE = instance
                 return instance
