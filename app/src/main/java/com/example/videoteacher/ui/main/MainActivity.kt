@@ -20,6 +20,8 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoteacher.R
+import com.example.videoteacher.adapters.CourseListAdapter
+import com.example.videoteacher.adapters.NewsListAdapterInterface
 import com.example.videoteacher.adapters.YoutubeAdapter
 import com.example.videoteacher.dao.MainActDao
 import com.example.videoteacher.database.VideoDb
@@ -31,7 +33,7 @@ import com.example.videoteacher.repository.MainRepoImpl
 import com.example.videoteacher.ui.youtube.YoutubeConnector
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NewsListAdapterInterface {
 
     companion object {
         const val INIT_QUERY = "Programming courses"
@@ -62,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         onlineDataSource = CourseOnlineDataSource(offlineDataSource, mainDao, CourseService())
         mainViewModel = ViewModelProviders.of(
             this,
-            MainViewModelfactory(MainRepoImpl(onlineDataSource, offlineDataSource))
+            MainViewModelfactory(MainRepoImpl(onlineDataSource, offlineDataSource,this.application))
         ).get(MainViewModel::class.java)
         setupRecycler()
         setTextWatcher()
@@ -106,9 +108,11 @@ class MainActivity : AppCompatActivity() {
 
         mainViewModel.courseList.observe(this, Observer {
             if (it.isNotEmpty())
-            Log.e("PlainList>>", "${it[0].id} <<<")
+            Log.e("PlainList>>", "${it[0]?.id} <<<")
             yAdapter = YoutubeAdapter(this, it)
-            rvRecentMain.adapter = yAdapter
+            val pagedAdapter = CourseListAdapter(this, this)
+            pagedAdapter.submitList(it)
+            rvRecentMain.adapter = pagedAdapter
             progress.dismiss()
 
             /*
@@ -119,8 +123,10 @@ class MainActivity : AppCompatActivity() {
         mainViewModel.suggestedAndroidList?.observe(this, Observer {
             yAdapterSuggested= YoutubeAdapter(this, it)
             if (it.isNotEmpty())
-            Log.e("Androidist>>", "${it[0].id} <<<")
-            rvSuggestedMain.adapter=yAdapterSuggested
+            Log.e("Androidist>>", "${it[0]?.id} <<<")
+            val paged = CourseListAdapter(this,this)
+            paged.submitList(it)
+            rvSuggestedMain.adapter=paged
             if (progress.isShowing)
                 progress.dismiss()
 

@@ -2,6 +2,7 @@ package com.example.videoteacher.ui.main
 
 import android.util.Log
 import androidx.lifecycle.*
+import androidx.paging.PagedList
 import com.example.videoteacher.model.Course
 import com.example.videoteacher.repository.MainRepoImpl
 import kotlinx.coroutines.CoroutineScope
@@ -14,8 +15,9 @@ class MainViewModel(private val repo: MainRepoImpl) : ViewModel() {
     private val courseSearch = MutableLiveData<String>()
     private val initSuggested = MutableLiveData<String>()
     private val uiScope = CoroutineScope(Dispatchers.IO)
-    var courseList:LiveData<List<Course>>
-    lateinit var suggestedAndroidList : LiveData<List<Course>>
+    var courseList:LiveData<PagedList<Course>>
+    lateinit var suggestedAndroidList : LiveData<PagedList<Course>>
+    lateinit var playList : MutableLiveData<PagedList<Course>>
 
 
 
@@ -41,10 +43,6 @@ class MainViewModel(private val repo: MainRepoImpl) : ViewModel() {
         courseSearch.postValue(query)
     }
 
-    fun getPlaylistItems(id: String): LiveData<List<Course>> {
-
-        return repo.getPlaylist(id)
-
-    }
+    fun getPlaylistItems(id: String): LiveData<PagedList<Course>> = repo.getPlaylist(id)
 
 }

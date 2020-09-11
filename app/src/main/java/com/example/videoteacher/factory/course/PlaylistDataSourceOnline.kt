@@ -1,8 +1,8 @@
 package com.olm.magtapp.data.factory.course
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.paging.PageKeyedDataSource
+import com.example.videoteacher.datasource.CourseOfflineDataSource
 import com.example.videoteacher.datasource.network.CourseService
 import com.example.videoteacher.model.Course
 import kotlinx.coroutines.CoroutineScope
@@ -11,13 +11,12 @@ import java.io.IOException
 import java.util.*
 
 
-class CourseDataSource(
-    val search: String?,
+class PlaylistDataSourceOnline(
+    val playId: String?,
     val service: CourseService,
     val scope: CoroutineScope,
-    val observer : MutableLiveData<Int>
+    val offlineDataSource: CourseOfflineDataSource
 ): PageKeyedDataSource<Int, Course>() {
-
 
     companion object{
         const val EVENT_COURSE_SEARCH_NO_INTERNET=125
@@ -28,11 +27,11 @@ class CourseDataSource(
     private var nextPageToken: String? = null
 
     override fun loadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, Course>) {
-        if (search==null) return
-        Log.d("Course loading Loading","Load initial data")
+        if (playId==null) return
+        Log.e("Course loading Loading","Load initial data")
         scope.launch {
             try {
-                val courseSearchResponse = service.searchCourses(search, nextPageToken)
+                val courseSearchResponse = service.getCourseItems(playId, nextPageToken)
                 if (courseSearchResponse.isSuccessful) {
                     val courseData = courseSearchResponse.body() ?: throw Exception(courseSearchResponse.message())
                     if (courseData.isItemListValid()) {
@@ -41,7 +40,7 @@ class CourseDataSource(
                         val courseList = mutableListOf<Course>()
                         courseRawData?.forEach {
                             val snippet = it?.snippet ?: return@forEach
-                            val courseId = it.id?.playlistId ?: return@forEach
+                            val courseId = it.snippet.playlistId ?: return@forEach
                             if (snippet.isDataValid()){
                                 courseList.add(Course(courseId, snippet.title!!,snippet.channelId!!,
                                     snippet.channelTitle!!,snippet.description!!,snippet.thumbnails?.medium?.url!!,
@@ -49,7 +48,9 @@ class CourseDataSource(
                                 ))
                             }
                         }
-                        loadVideoDurations(courseList)
+                        //loadVideoDurations(courseList)
+                        Log.e("onlineDaTa>>", "${courseList.size} <<<")
+                        offlineDataSource.insertMainList(courseList)
                         // send news callback.
                         callback.onResult( courseList , null, 1 )
                     } else throw Exception("Error while searching course.")
@@ -59,11 +60,11 @@ class CourseDataSource(
             }catch (e: IOException){
                 e.printStackTrace()
                 // Internet not connected.
-                observer.postValue(EVENT_COURSE_SEARCH_NO_INTERNET)
+               // observer.postValue(EVENT_COURSE_SEARCH_NO_INTERNET)
             }catch (e:Exception){
                 e.printStackTrace()
                 // Something went wrong
-                observer.postValue(EVENT_COURSE_SEARCH_SOMETHING_WENT_WRONG)
+               // observer.postValue(EVENT_COURSE_SEARCH_SOMETHING_WENT_WRONG)
             }
         }
     }
@@ -85,10 +86,10 @@ class CourseDataSource(
     }
 
     override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<Int, Course>) {
-        if (search==null) return
+        if (playId==null) return
         scope.launch {
             try {
-                val courseSearchResponse = service.searchCourses(search, nextPageToken)
+                val courseSearchResponse = service.searchCourses(playId, nextPageToken)
                 if (courseSearchResponse.isSuccessful) {
                     val courseData = courseSearchResponse.body() ?: throw Exception(courseSearchResponse.message())
                     if (courseData.isItemListValid()) {
@@ -115,11 +116,11 @@ class CourseDataSource(
             }catch (e: IOException){
                 e.printStackTrace()
                 // Internet not connected.
-                observer.postValue(EVENT_COURSE_SEARCH_NO_INTERNET)
+                //observer.postValue(EVENT_COURSE_SEARCH_NO_INTERNET)
             }catch (e:Exception){
                 e.printStackTrace()
                 // Something went wrong
-                observer.postValue(EVENT_COURSE_SEARCH_SOMETHING_WENT_WRONG)
+                //observer.postValue(EVENT_COURSE_SEARCH_SOMETHING_WENT_WRONG)
             }
         }
     }

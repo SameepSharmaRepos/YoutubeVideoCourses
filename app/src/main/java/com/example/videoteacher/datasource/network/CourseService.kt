@@ -67,7 +67,8 @@ interface CourseService {
 
                 val originalUrl = request.url()
                 val url = originalUrl.newBuilder()
-                    .addQueryParameter("key", "AIzaSyDI39BoS1zJ9YB511Brb8iTIgtrEr11K2M")
+//                    .addQueryParameter("key", "AIzaSyDI39BoS1zJ9YB511Brb8iTIgtrEr11K2M")
+                    .addQueryParameter("key", "AIzaSyBgb1yYbvgpIyVK3kLRgVhtytYecAsAPjQ")
                     .build()
 
                 val updatedRequest = request.newBuilder()

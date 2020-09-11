@@ -1,16 +1,17 @@
 package com.example.videoteacher.ui.player
 
 import android.os.Bundle
-import android.os.Handler
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.videoteacher.R
+import com.example.videoteacher.adapters.CourseListAdapter
+import com.example.videoteacher.adapters.NewsListAdapterInterface
 import com.example.videoteacher.adapters.YoutubeAdapter
 import com.example.videoteacher.dao.MainActDao
 import com.example.videoteacher.database.VideoDb
@@ -20,33 +21,32 @@ import com.example.videoteacher.datasource.network.CourseService
 import com.example.videoteacher.repository.MainRepoImpl
 import com.example.videoteacher.ui.main.MainViewModel
 import com.example.videoteacher.ui.main.MainViewModelfactory
-import com.example.videoteacher.ui.youtube.YoutubeConnector
-import com.google.android.youtube.player.YouTubeBaseActivity
 import com.google.android.youtube.player.YouTubeInitializationResult
 import com.google.android.youtube.player.YouTubePlayer
-import com.google.android.youtube.player.YouTubePlayerView
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.utils.YouTubePlayerTracker
 import kotlinx.android.synthetic.main.activity_player.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlin.coroutines.coroutineContext
 
 //The activity which plays has YouTubePlayerView inside layout must extend YouTubeBaseActivity
 //implement OnInitializedListener to get the state of the player whether it has succeed or failed
 //to load
-class PlayerActivity : AppCompatActivity(), YouTubePlayer.OnInitializedListener {
-    private var playerView: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer? = null
+class PlayerActivity : AppCompatActivity(), YouTubePlayer.OnInitializedListener, NewsListAdapterInterface {
+    private var playerView: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer? =
+        null
 
     //ViewModel
     private lateinit var playerViewModel: MainViewModel
+
     //Dao
     private lateinit var mainDao: MainActDao
     private lateinit var offlineDataSource: CourseOfflineDataSource
     private lateinit var onlineDataSource: CourseOnlineDataSource
+
     //repo
-    private lateinit var repo:MainRepoImpl
+    private lateinit var repo: MainRepoImpl
     private val tracker = YouTubePlayerTracker()
 
     //Overriding onCreate method(first method to be called) to create the activity
@@ -61,16 +61,18 @@ class PlayerActivity : AppCompatActivity(), YouTubePlayer.OnInitializedListener 
         mainDao = VideoDb.getDatabase(applicationContext).mainActDao()
         offlineDataSource = CourseOfflineDataSource(mainDao)
         onlineDataSource = CourseOnlineDataSource(offlineDataSource, mainDao, CourseService())
-        repo = MainRepoImpl(onlineDataSource, offlineDataSource)
+        repo = MainRepoImpl(onlineDataSource, offlineDataSource, this.application)
         repo.setScope(coroutineScope = CoroutineScope(Dispatchers.IO))
-        playerViewModel = ViewModelProviders.of(this,
+        playerViewModel = ViewModelProviders.of(
+            this,
             MainViewModelfactory(repo)
         ).get(MainViewModel::class.java)
         setUpRecycler()
+        observeList()
 
         //getting youtube player view object
 
-        player_rv.layoutManager=LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
+        player_rv.layoutManager = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
 
         //initialize method of YouTubePlayerView used to play videos and control video playback
         //arguments are a valid API key that is enabled to use the YouTube Data API v3 service
@@ -81,22 +83,28 @@ class PlayerActivity : AppCompatActivity(), YouTubePlayer.OnInitializedListener 
             override fun onReady(youTubePlayer: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer) {
                 intent.getStringExtra("VIDEO_ID")?.let {
 
-                            youTubePlayer.loadVideo(it,0f)
+                    youTubePlayer.loadVideo(it, 0f)
 
                 }
                 youTubePlayer.addListener(tracker)
             }
 
-            override fun onStateChange(youTubePlayer: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer, state: PlayerConstants.PlayerState ) {
-                if (state == PlayerConstants.PlayerState.ENDED){
+            override fun onStateChange(
+                youTubePlayer: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer,
+                state: PlayerConstants.PlayerState
+            ) {
+                if (state == PlayerConstants.PlayerState.ENDED) {
                     //onVideoEnded()
-                }else {
+                } else {
                     super.onStateChange(youTubePlayer, state)
                 }
             }
 
-            override fun onCurrentSecond(youTubePlayer: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer, second: Float) {
-                if (second.toInt()%10==0){
+            override fun onCurrentSecond(
+                youTubePlayer: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer,
+                second: Float
+            ) {
+                if (second.toInt() % 10 == 0) {
                     //saveVideoPlayedDuration(second.toInt())
                 }
             }
@@ -116,11 +124,21 @@ class PlayerActivity : AppCompatActivity(), YouTubePlayer.OnInitializedListener 
         video_desc.text = intent.getStringExtra("VIDEO_DESC")
     }
 
+    private fun observeList() {
+
+        playerViewModel.getPlaylistItems(intent.getStringExtra("VIDEO_ID")!!)
+
+    }
+
     private fun setUpRecycler() {
         val list = playerViewModel.getPlaylistItems(intent.getStringExtra("VIDEO_ID")!!)
-        val adapter = YoutubeAdapter(this, list.value)
-        player_rv.layoutManager=LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
-        player_rv.adapter=adapter
+            .observe(this, Observer {
+//                val adapter = YoutubeAdapter(this, list.value)
+                val adapter = CourseListAdapter(this, this)
+                adapter.submitList(it)
+                player_rv.layoutManager = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
+                player_rv.adapter = adapter
+            })
     }
 
     //method called if the YouTubePlayerView fails to initialize
